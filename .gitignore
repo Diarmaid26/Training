@@ -1,0 +1,41 @@
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.env
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.pip-cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Build output
+build/
+dist/
+.venv/
+env/
+
+# Test coverage
+.coverage
+htmlcov/
+
+# Local
+.local/
+.temp/

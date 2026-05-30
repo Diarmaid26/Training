@@ -1,0 +1,16 @@
+# GitHub Pages Configuration
+theme: jekyll-theme-minimal
+title: Training Hub
+description: A comprehensive training and learning repository
+show_downloads: true
+
+# Repository information
+github:
+  repository_url: https://github.com/Diarmaid26/Training
+
+# Plugins
+plugins:
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+  - jekyll-titles-from-headings
+  - jekyll-github-metadata
