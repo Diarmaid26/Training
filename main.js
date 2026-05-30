@@ -1,3 +1,13 @@
+const toggle = document.getElementById('themeToggle');
+const saved = localStorage.getItem('theme');
+if (saved === 'light') { document.body.classList.add('light'); toggle.textContent = '🌙'; }
+
+toggle.addEventListener('click', () => {
+  const isLight = document.body.classList.toggle('light');
+  toggle.textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+});
+
 const form = document.getElementById('contactForm');
 const status = document.getElementById('formStatus');
 const btn = form.querySelector('button[type="submit"]');
