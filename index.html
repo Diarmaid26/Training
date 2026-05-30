@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diarmaid O'Callaghan</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="avatar-wrap">
+        <img class="avatar" src="avatar.jpg" alt="Diarmaid O'Callaghan" onerror="this.style.display='none';document.querySelector('.avatar-fallback').style.display='flex'" />
+        <div class="avatar-fallback">DO</div>
+      </div>
+      <h1>Diarmaid O'Callaghan</h1>
+      <p class="tagline">Software engineer · Open-source enthusiast · Based in Dublin</p>
+      <div class="social-links">
+        <a href="https://github.com/yourhandle" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://linkedin.com/in/yourhandle" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://twitter.com/yourhandle" target="_blank" rel="noopener">Twitter</a>
+      </div>
+    </section>
+
+    <!-- Bio -->
+    <section class="section">
+      <h2>About</h2>
+      <p>
+        I build tools that help people do more with less effort. I've spent the last several years working across
+        full-stack web, developer tooling, and data pipelines. I care about clean interfaces, honest code, and
+        shipping things that actually work.
+      </p>
+      <p>
+        When I'm not at a keyboard I'm usually hiking, reading, or trying to perfect my coffee.
+      </p>
+    </section>
+
+    <!-- Projects -->
+    <section class="section">
+      <h2>Projects</h2>
+      <div class="project-grid">
+
+        <a class="project-card" href="https://github.com/yourhandle/project-one" target="_blank" rel="noopener">
+          <div class="project-header">
+            <span class="project-name">Project One</span>
+            <span class="project-arrow">↗</span>
+          </div>
+          <p class="project-desc">A fast CLI tool for managing environment configs across projects. Built with Go.</p>
+          <div class="project-tags">
+            <span>Go</span><span>CLI</span><span>Open Source</span>
+          </div>
+        </a>
+
+        <a class="project-card" href="https://github.com/yourhandle/project-two" target="_blank" rel="noopener">
+          <div class="project-header">
+            <span class="project-name">Project Two</span>
+            <span class="project-arrow">↗</span>
+          </div>
+          <p class="project-desc">Real-time collaborative markdown editor with end-to-end encryption. React + WebSockets.</p>
+          <div class="project-tags">
+            <span>React</span><span>Node</span><span>WebSockets</span>
+          </div>
+        </a>
+
+        <a class="project-card" href="https://github.com/yourhandle/project-three" target="_blank" rel="noopener">
+          <div class="project-header">
+            <span class="project-name">Project Three</span>
+            <span class="project-arrow">↗</span>
+          </div>
+          <p class="project-desc">Lightweight analytics dashboard for self-hosted apps. No tracking, just your data.</p>
+          <div class="project-tags">
+            <span>Python</span><span>SQLite</span><span>Self-hosted</span>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section" id="contact">
+      <h2>Contact</h2>
+      <p>Have a project in mind or just want to say hello? Send me a message.</p>
+      <form class="contact-form" id="contactForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" placeholder="Jane Smith" required />
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="jane@example.com" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="5" placeholder="What's on your mind?" required></textarea>
+        </div>
+        <button type="submit">Send message</button>
+        <p class="form-status" id="formStatus" aria-live="polite"></p>
+      </form>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>© 2026 Diarmaid O'Callaghan · Built with plain HTML, CSS &amp; JS</p>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
