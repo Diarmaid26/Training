@@ -229,6 +229,10 @@ const ETF_UNIVERSE = [
 const SYMBOLS = ETF_UNIVERSE.map(e => e.symbol);
 const META = Object.fromEntries(ETF_UNIVERSE.map(e => [e.symbol, e]));
 
+// Combined lookup across ETFs + stocks — used by shared autocomplete
+const ALL_UNIVERSE = [...ETF_UNIVERSE, ...STOCK_UNIVERSE];
+const ALL_META = Object.fromEntries(ALL_UNIVERSE.map(e => [e.symbol, e]));
+
 // ── Chart colours ─────────────────────────────────────────────────────────────
 const CHART_COLORS = ['#388bfd','#3fb950','#f85149','#d29922','#bc8cff','#79c0ff'];
 
@@ -436,7 +440,7 @@ function renderRankings() {
 window.openETFDetail = function(symbol) {
   const e = META[symbol];
   const q = quotes[symbol] || {};
-  if (!e) return;
+  if (!e) { openStockDetail(symbol); return; }  // fall through to stock panel if it's a stock
 
   const bid    = q.bid > 0 ? q.bid : null;
   const ask    = q.ask > 0 ? q.ask : null;
@@ -484,8 +488,14 @@ function openSnapshot(symbol) {
 }
 
 async function renderSnapshot(symbol) {
-  const q = quotes[symbol] || {};
-  const m = META[symbol];
+  // Fetch live quote if not already in either cache
+  if (!quotes[symbol] && !stockQuotes[symbol]) {
+    const res = await fetch(`/api/etf/quote?symbols=${symbol}`).then(r => r.json()).catch(() => null);
+    const result = res?.quoteResponse?.result?.[0];
+    if (result) { quotes[symbol] = result; stockQuotes[symbol] = result; }
+  }
+  const q = quotes[symbol] || stockQuotes[symbol] || {};
+  const m = ALL_META[symbol];
   if (!m && !q.symbol) return;
 
   const bid  = q.bid > 0 ? q.bid : null;
@@ -517,7 +527,7 @@ async function renderSnapshot(symbol) {
   $('sdPrevClose').textContent = q.regularMarketPreviousClose != null ? '$' + fmt(q.regularMarketPreviousClose) : '—';
   $('sdVolume').textContent   = fmtVol(q.regularMarketVolume);
   $('sdAUM').textContent      = fmtAUM(q.marketCap);
-  $('sdER').textContent       = m?.er != null ? fmt(m.er, 2) + '%' : '—';
+  $('sdER').textContent       = m?.er != null ? fmt(m.er, 2) + '%' : (m?.sector ? '—' : 'n/a');
   $('sdYield').textContent    = q.trailingAnnualDividendYield != null
     ? fmt(q.trailingAnnualDividendYield * 100) + '%' : '—';
   $('sd50d').textContent      = q.fiftyDayAverage != null ? '$' + fmt(q.fiftyDayAverage) : '—';
@@ -583,10 +593,18 @@ function drawMiniChart(hist) {
 // ── Compare ───────────────────────────────────────────────────────────────────
 async function renderCompare(symA, symB) {
   if (!symA || !symB) return;
-  const qA = quotes[symA] || {};
-  const qB = quotes[symB] || {};
-  const mA = META[symA] || {};
-  const mB = META[symB] || {};
+  // Fetch live data for any symbol not yet in either cache
+  for (const sym of [symA, symB]) {
+    if (!quotes[sym] && !stockQuotes[sym]) {
+      const res = await fetch(`/api/etf/quote?symbols=${sym}`).then(r => r.json()).catch(() => null);
+      const result = res?.quoteResponse?.result?.[0];
+      if (result) { quotes[sym] = result; stockQuotes[sym] = result; }
+    }
+  }
+  const qA = quotes[symA] || stockQuotes[symA] || {};
+  const qB = quotes[symB] || stockQuotes[symB] || {};
+  const mA = ALL_META[symA] || {};
+  const mB = ALL_META[symB] || {};
 
   const bidA  = qA.bid > 0 ? qA.bid : null;
   const askA  = qA.ask > 0 ? qA.ask : null;
@@ -729,9 +747,11 @@ async function renderMainChart() {
     const lastVal = ds.data[ds.data.length - 1]?.y;
     const firstVal = ds.data[0]?.y;
     const chgPct = (firstVal && lastVal) ? ((lastVal - firstVal) / firstVal * 100) : null;
+    const fullName = ALL_META[ds.label]?.name || '';
     return `<div class="legend-item">
       <span class="legend-dot" style="background:${ds.borderColor}"></span>
       <strong>${ds.label}</strong>
+      ${fullName ? `<span style="color:var(--text3);font-size:11px">${fullName}</span>` : ''}
       ${lastVal != null ? `<span>${chartNormalize ? fmt(lastVal) : '$' + fmt(lastVal)}</span>` : ''}
       ${chgPct != null ? `<span class="${cls(chgPct)}">(${fmtPct(chgPct)})</span>` : ''}
     </div>`;
@@ -754,23 +774,26 @@ window.removeChartSymbol = function(sym) {
 };
 
 // ── Autocomplete ──────────────────────────────────────────────────────────────
-function bindAutocomplete(inputId, listId, onSelect) {
+function bindAutocomplete(inputId, listId, onSelect, universe = ALL_UNIVERSE) {
   const input = $(inputId);
   const list  = $(listId);
 
   input.addEventListener('input', () => {
     const q = input.value.trim().toLowerCase();
     if (!q) { list.classList.remove('open'); return; }
-    const matches = ETF_UNIVERSE.filter(e =>
+    const matches = universe.filter(e =>
       e.symbol.toLowerCase().startsWith(q) || e.name.toLowerCase().includes(q)
-    ).slice(0, 8);
+    ).slice(0, 10);
     if (!matches.length) { list.classList.remove('open'); return; }
-    list.innerHTML = matches.map(e =>
-      `<div class="autocomplete-item" data-sym="${e.symbol}">
+    list.innerHTML = matches.map(e => {
+      const badge = META[e.symbol] ? 'ETF' : 'Stock';
+      const badgeColor = badge === 'ETF' ? '#388bfd' : '#3fb950';
+      return `<div class="autocomplete-item" data-sym="${e.symbol}">
         <span class="ac-sym">${e.symbol}</span>
         <span class="ac-name">${e.name}</span>
-      </div>`
-    ).join('');
+        <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${badgeColor}20;color:${badgeColor};flex-shrink:0">${badge}</span>
+      </div>`;
+    }).join('');
     list.classList.add('open');
   });
 
@@ -855,7 +878,7 @@ async function init() {
   bindAutocomplete('compareInputB', 'autocompleteB', sym => { compareB = sym; renderCompare(compareA, compareB); });
 
   // Chart controls
-  bindAutocomplete('chartInput', 'autocompleteChart', sym => {
+  bindAutocomplete('chartInput', 'autocompleteChart', async sym => {
     if (chartSymbols.includes(sym) || chartSymbols.length >= 6) return;
     chartSymbols.push(sym);
     $('chartInput').value = '';
