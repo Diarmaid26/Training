@@ -73,6 +73,7 @@ app.get('/api/etf/quote', async (req, res) => {
     'bid','ask','bidSize','askSize','trailingAnnualDividendYield',
     'fiftyDayAverage','twoHundredDayAverage','regularMarketOpen',
     'regularMarketPreviousClose','ytdReturn','trailingThreeMonthReturns',
+    'trailingPE','epsTrailingTwelveMonths',
   ].join(',');
   const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=${fields}`;
   try {

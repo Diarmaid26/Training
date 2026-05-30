@@ -34,6 +34,7 @@
     <button class="tab" data-tab="snapshot">Snapshot</button>
     <button class="tab" data-tab="compare">Compare</button>
     <button class="tab" data-tab="chart">Chart</button>
+    <button class="tab" data-tab="stocks">Top 100 Stocks</button>
   </nav>
 
   <!-- ── RANKINGS TAB ── -->
@@ -167,6 +168,88 @@
       <div class="chart-legend" id="chartLegend"></div>
     </div>
     <p class="chart-note">Monthly closes since Jan 2020 via Yahoo Finance · 15-20 min delay during market hours</p>
+  </section>
+
+  <!-- ── STOCKS TAB ── -->
+  <section class="tab-content" id="tab-stocks">
+    <div class="toolbar">
+      <div class="category-filters" id="stockSectorFilters">
+        <button class="chip active" data-sector="All">All</button>
+        <button class="chip" data-sector="Technology">Technology</button>
+        <button class="chip" data-sector="Health Care">Health Care</button>
+        <button class="chip" data-sector="Financials">Financials</button>
+        <button class="chip" data-sector="Consumer Discretionary">Consumer Disc.</button>
+        <button class="chip" data-sector="Consumer Staples">Consumer Staples</button>
+        <button class="chip" data-sector="Communication Services">Communication</button>
+        <button class="chip" data-sector="Industrials">Industrials</button>
+        <button class="chip" data-sector="Energy">Energy</button>
+        <button class="chip" data-sector="Materials">Materials</button>
+        <button class="chip" data-sector="Utilities">Utilities</button>
+        <button class="chip" data-sector="Real Estate">Real Estate</button>
+      </div>
+      <input class="search-box" id="stockSearchBox" type="text" placeholder="Search ticker or company…" />
+    </div>
+
+    <div class="table-wrap">
+      <table class="etf-table" id="stocksTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-scol="rank">#</th>
+            <th class="sortable" data-scol="symbol">Ticker</th>
+            <th>Company</th>
+            <th>Sector</th>
+            <th class="sortable num" data-scol="price">Price</th>
+            <th class="sortable num" data-scol="changePct">Chg%</th>
+            <th class="sortable num" data-scol="bid">Bid</th>
+            <th class="sortable num" data-scol="ask">Ask</th>
+            <th class="sortable num" data-scol="volume">Volume</th>
+            <th class="sortable num" data-scol="aum">Mkt Cap</th>
+            <th class="sortable num" data-scol="pe">P/E</th>
+            <th class="num">Div Yield</th>
+          </tr>
+        </thead>
+        <tbody id="stocksBody">
+          <tr><td colspan="12" class="loading-cell">Loading stock data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Expanded stock detail panel -->
+    <div class="stock-detail-panel hidden" id="stockDetailPanel">
+      <button class="panel-close" id="stockPanelClose">✕</button>
+      <div class="stock-detail-inner">
+        <div class="stock-detail-header">
+          <div>
+            <span class="snap-symbol" id="sdSymbol"></span>
+            <span class="snap-name" id="sdCompany"></span>
+            <span class="snap-cat" id="sdSector"></span>
+          </div>
+          <div class="snap-price-block">
+            <span class="snap-price" id="sdPrice"></span>
+            <span class="snap-change" id="sdPriceChange"></span>
+          </div>
+        </div>
+        <p class="stock-description" id="sdDescription"></p>
+        <div class="snap-grid">
+          <div class="snap-metric"><label>Bid</label><span id="sdStockBid"></span></div>
+          <div class="snap-metric"><label>Ask</label><span id="sdStockAsk"></span></div>
+          <div class="snap-metric"><label>Spread</label><span id="sdStockSpread"></span></div>
+          <div class="snap-metric"><label>Volume</label><span id="sdStockVol"></span></div>
+          <div class="snap-metric"><label>Market Cap</label><span id="sdMktCap"></span></div>
+          <div class="snap-metric"><label>P/E Ratio</label><span id="sdPE"></span></div>
+          <div class="snap-metric"><label>Div Yield</label><span id="sdDivYield"></span></div>
+          <div class="snap-metric"><label>EPS (TTM)</label><span id="sdEPS"></span></div>
+          <div class="snap-metric"><label>Day Range</label><span id="sdStockDayRange"></span></div>
+          <div class="snap-metric"><label>52W Range</label><span id="sdStock52w"></span></div>
+          <div class="snap-metric"><label>50-Day Avg</label><span id="sdStock50d"></span></div>
+          <div class="snap-metric"><label>200-Day Avg</label><span id="sdStock200d"></span></div>
+        </div>
+        <div class="holdings-section">
+          <h4>Key Products &amp; Business Lines</h4>
+          <div class="holdings-tags" id="sdHoldings"></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <footer class="site-footer">
