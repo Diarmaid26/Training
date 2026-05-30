@@ -19,12 +19,29 @@ form.addEventListener('submit', async (e) => {
   status.className = 'form-status';
   status.textContent = '';
 
-  // Swap this fetch() for your actual form endpoint (Formspree, Netlify Forms, etc.)
-  await new Promise(r => setTimeout(r, 900));
+  try {
+    const res = await fetch('/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name.value,
+        email: form.email.value,
+        message: form.message.value,
+      }),
+    });
 
-  status.textContent = "Thanks! I'll get back to you soon.";
-  status.className = 'form-status success';
-  form.reset();
+    if (res.ok) {
+      status.textContent = "Thanks! I'll get back to you soon.";
+      status.className = 'form-status success';
+      form.reset();
+    } else {
+      throw new Error();
+    }
+  } catch {
+    status.textContent = 'Something went wrong. Please try again.';
+    status.className = 'form-status error';
+  }
+
   btn.disabled = false;
   btn.textContent = 'Send message';
 });
