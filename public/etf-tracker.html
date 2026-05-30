@@ -118,9 +118,51 @@
       <div class="snap-chart-wrap">
         <canvas id="snapshotChart"></canvas>
       </div>
+      <div class="holdings-section" id="snapHoldingsSection" style="display:none">
+        <h4>Top Holdings &amp; Strategy</h4>
+        <div class="holdings-tags" id="snapHoldings"></div>
+      </div>
+      <p class="stock-description" id="snapDescription" style="margin-top:16px;display:none"></p>
     </div>
     <div id="snapshotEmpty" class="empty-state">Select a ticker above to view details.</div>
   </section>
+
+  <!-- ── ETF SLIDE-IN DETAIL PANEL (Rankings tab click) ── -->
+  <div class="stock-detail-panel hidden" id="etfDetailPanel">
+    <button class="panel-close" id="etfPanelClose">✕</button>
+    <div class="stock-detail-inner">
+      <div class="stock-detail-header">
+        <div>
+          <span class="snap-symbol" id="edSymbol"></span>
+          <span class="snap-name" id="edName"></span>
+          <span class="snap-cat" id="edCat"></span>
+        </div>
+        <div class="snap-price-block">
+          <span class="snap-price" id="edPrice"></span>
+          <span class="snap-change" id="edChange"></span>
+        </div>
+      </div>
+      <p class="stock-description" id="edDescription"></p>
+      <div class="snap-grid">
+        <div class="snap-metric"><label>Bid</label><span id="edBid"></span></div>
+        <div class="snap-metric"><label>Ask</label><span id="edAsk"></span></div>
+        <div class="snap-metric"><label>Spread</label><span id="edSpread"></span></div>
+        <div class="snap-metric"><label>Volume</label><span id="edVolume"></span></div>
+        <div class="snap-metric"><label>AUM</label><span id="edAUM"></span></div>
+        <div class="snap-metric"><label>Expense Ratio</label><span id="edER"></span></div>
+        <div class="snap-metric"><label>Div Yield</label><span id="edYield"></span></div>
+        <div class="snap-metric"><label>Day Range</label><span id="edDayRange"></span></div>
+        <div class="snap-metric"><label>52W Range</label><span id="ed52w"></span></div>
+        <div class="snap-metric"><label>50-Day Avg</label><span id="ed50d"></span></div>
+        <div class="snap-metric"><label>200-Day Avg</label><span id="ed200d"></span></div>
+        <div class="snap-metric"><label>YTD Return</label><span id="edYTD"></span></div>
+      </div>
+      <div class="holdings-section">
+        <h4>Top Holdings &amp; Strategy</h4>
+        <div class="holdings-tags" id="edHoldings"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ── COMPARE TAB ── -->
   <section class="tab-content" id="tab-compare">
