@@ -34,6 +34,7 @@
     <button class="tab" data-tab="snapshot">Snapshot</button>
     <button class="tab" data-tab="compare">Compare</button>
     <button class="tab" data-tab="chart">Chart</button>
+    <button class="tab" data-tab="etfs">Top 100 ETFs</button>
     <button class="tab" data-tab="stocks">Top 100 Stocks</button>
   </nav>
 
@@ -210,6 +211,47 @@
       <div class="chart-legend" id="chartLegend"></div>
     </div>
     <p class="chart-note">Monthly closes since Jan 2020 via Yahoo Finance · 15-20 min delay during market hours</p>
+  </section>
+
+  <!-- ── TOP 100 ETFs TAB ── -->
+  <section class="tab-content" id="tab-etfs">
+    <div class="toolbar">
+      <div class="category-filters" id="etfCategoryFilters">
+        <button class="chip active" data-ecat="All">All</button>
+        <button class="chip" data-ecat="Broad US Equity">Broad US Equity</button>
+        <button class="chip" data-ecat="US Sector">US Sector</button>
+        <button class="chip" data-ecat="International">International</button>
+        <button class="chip" data-ecat="Factor / Smart Beta">Factor / Smart Beta</button>
+        <button class="chip" data-ecat="Fixed Income">Fixed Income</button>
+        <button class="chip" data-ecat="Commodities &amp; Alts">Commodities &amp; Alts</button>
+        <button class="chip" data-ecat="Leveraged / Inverse">Leveraged / Inverse</button>
+      </div>
+      <input class="search-box" id="etfTabSearchBox" type="text" placeholder="Search ticker or fund name…" />
+    </div>
+
+    <div class="table-wrap">
+      <table class="etf-table" id="etfsTabTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-ecol="rank">#</th>
+            <th class="sortable" data-ecol="symbol">Ticker</th>
+            <th>Fund Name</th>
+            <th>Category</th>
+            <th class="sortable num" data-ecol="price">Price</th>
+            <th class="sortable num" data-ecol="changePct">Chg%</th>
+            <th class="sortable num" data-ecol="bid">Bid</th>
+            <th class="sortable num" data-ecol="ask">Ask</th>
+            <th class="sortable num" data-ecol="spread">Spread</th>
+            <th class="sortable num" data-ecol="volume">Volume</th>
+            <th class="sortable num" data-ecol="aum">AUM</th>
+            <th class="num">Exp Ratio</th>
+          </tr>
+        </thead>
+        <tbody id="etfsTabBody">
+          <tr><td colspan="12" class="loading-cell">Loading ETF data…</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <!-- ── STOCKS TAB ── -->

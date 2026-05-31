@@ -905,6 +905,36 @@ async function init() {
   renderRankings();
   scheduleRefresh();
 
+  // ETFs tab — renders from already-loaded quotes (no extra fetch needed)
+  document.querySelector('[data-tab="etfs"]').addEventListener('click', () => {
+    renderETFsTab();
+  });
+
+  // ETFs tab category filter
+  $('etfCategoryFilters').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    $('etfCategoryFilters').querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    etfTabFilterCat = chip.dataset.ecat;
+    renderETFsTab();
+  });
+
+  // ETFs tab search
+  $('etfTabSearchBox').addEventListener('input', e => {
+    etfTabSearch = e.target.value;
+    renderETFsTab();
+  });
+
+  // ETFs tab sort
+  document.querySelectorAll('#etfsTabTable th.sortable').forEach(th =>
+    th.addEventListener('click', () => {
+      if (etfTabSortCol === th.dataset.ecol) etfTabSortDir *= -1;
+      else { etfTabSortCol = th.dataset.ecol; etfTabSortDir = -1; }
+      renderETFsTab();
+    })
+  );
+
   // Stocks tab — lazy-load on first visit
   document.querySelector('[data-tab="stocks"]').addEventListener('click', async () => {
     if (!stocksLoaded) {
@@ -957,6 +987,81 @@ async function init() {
   document.querySelector('[data-tab="chart"]').addEventListener('click', () => {
     if (!mainChart && chartSymbols.length) renderMainChart();
   }, { once: true });
+}
+
+// ── ETFs Tab State & Logic (dedicated Top 100 ETFs tab) ───────────────────────
+let etfTabSortCol = 'aum';
+let etfTabSortDir = -1;
+let etfTabFilterCat = 'All';
+let etfTabSearch = '';
+
+function etfTabSortValue(sym, col) {
+  const q = quotes[sym] || {};
+  switch (col) {
+    case 'symbol':    return sym;
+    case 'price':     return q.regularMarketPrice || 0;
+    case 'changePct': return q.regularMarketChangePercent || 0;
+    case 'bid':       return q.bid > 0 ? q.bid : 0;
+    case 'ask':       return q.ask > 0 ? q.ask : 0;
+    case 'spread':    return (q.bid > 0 && q.ask > 0) ? q.ask - q.bid : 0;
+    case 'volume':    return q.regularMarketVolume || 0;
+    case 'aum':       return q.marketCap || 0;
+    default:          return 0;
+  }
+}
+
+function renderETFsTab() {
+  const body = $('etfsTabBody');
+  const q = etfTabSearch.toLowerCase();
+
+  let rows = ETF_UNIVERSE.filter(e => {
+    if (etfTabFilterCat !== 'All' && e.cat !== etfTabFilterCat) return false;
+    if (q && !e.symbol.toLowerCase().includes(q) && !e.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  rows.sort((a, b) => {
+    if (etfTabSortCol === 'rank') return 0;
+    const va = etfTabSortValue(a.symbol, etfTabSortCol);
+    const vb = etfTabSortValue(b.symbol, etfTabSortCol);
+    if (typeof va === 'string') return etfTabSortDir * va.localeCompare(vb);
+    return etfTabSortDir * (vb - va);
+  });
+
+  if (!Object.keys(quotes).length) {
+    body.innerHTML = '<tr><td colspan="12" class="loading-cell">Loading…</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rows.map((e, i) => {
+    const q = quotes[e.symbol] || {};
+    const price  = q.regularMarketPrice;
+    const chgPct = q.regularMarketChangePercent;
+    const bid    = q.bid > 0 ? q.bid : null;
+    const ask    = q.ask > 0 ? q.ask : null;
+    const spread = (bid && ask) ? ask - bid : null;
+    return `<tr onclick="openETFDetail('${e.symbol}')">
+      <td class="num">${i + 1}</td>
+      <td class="ticker">${e.symbol}</td>
+      <td class="name-cell" title="${e.name}">${e.name}</td>
+      <td><span class="cat-badge">${e.cat}</span></td>
+      <td class="num">${price != null ? '$' + fmt(price) : '—'}</td>
+      <td class="num ${cls(chgPct)}">${fmtPct(chgPct)}</td>
+      <td class="num">${bid ? '$' + fmt(bid) : '—'}</td>
+      <td class="num">${ask ? '$' + fmt(ask) : '—'}</td>
+      <td class="num">${spread ? '$' + fmt(spread) : '—'}</td>
+      <td class="num">${fmtVol(q.regularMarketVolume)}</td>
+      <td class="num">${fmtAUM(q.marketCap)}</td>
+      <td class="num">${fmt(e.er, 2)}%</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="12" class="loading-cell">No ETFs match your filter.</td></tr>';
+
+  document.querySelectorAll('#etfsTabTable th.sortable').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.ecol === etfTabSortCol) {
+      th.classList.add(etfTabSortDir === -1 ? 'sort-desc' : 'sort-asc');
+    }
+  });
 }
 
 // ── Stocks Tab State & Logic ──────────────────────────────────────────────────
