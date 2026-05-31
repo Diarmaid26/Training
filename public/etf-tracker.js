@@ -349,6 +349,7 @@ function scheduleRefresh() {
   refreshTimer = setInterval(async () => {
     await fetchQuotes();
     renderRankings();
+    renderMovers();
     secondsLeft = interval;
   }, interval * 1000);
 
@@ -361,6 +362,43 @@ function scheduleRefresh() {
     updateMarketStatus();
   }, 1000);
 }
+
+// ── Top Movers ────────────────────────────────────────────────────────────────
+function renderMovers() {
+  // Pool all loaded quotes from ETFs + stocks
+  const allLoaded = [...Object.entries(quotes), ...Object.entries(stockQuotes)];
+  const seen = new Set();
+  const tickers = [];
+  for (const [sym, q] of allLoaded) {
+    if (seen.has(sym)) continue;
+    seen.add(sym);
+    const pct = q.regularMarketChangePercent;
+    const price = q.regularMarketPrice;
+    if (pct == null || price == null) continue;
+    const meta = ALL_META[sym];
+    tickers.push({ sym, pct, price, name: meta?.name || q.shortName || sym });
+  }
+  if (!tickers.length) return;
+
+  tickers.sort((a, b) => b.pct - a.pct);
+  const gainers = tickers.slice(0, 5);
+  const losers  = tickers.slice(-5).reverse();
+
+  const chip = ({ sym, pct, price }, cls) =>
+    `<div class="mover-chip ${cls}" onclick="handleMoverClick('${sym}')">
+      <span class="mover-sym">${sym}</span>
+      <span class="mover-pct">${pct >= 0 ? '+' : ''}${fmt(pct)}%</span>
+      <span class="mover-price">$${fmt(price)}</span>
+    </div>`;
+
+  $('moverGainers').innerHTML = gainers.map(t => chip(t, 'gainer')).join('');
+  $('moverLosers').innerHTML  = losers.map(t => chip(t, 'loser')).join('');
+}
+
+window.handleMoverClick = function(sym) {
+  if (META[sym])        openETFDetail(sym);
+  else if (ALL_META[sym]) openStockDetail(sym);
+};
 
 // ── Rankings ──────────────────────────────────────────────────────────────────
 function sortValue(sym, col) {
@@ -863,6 +901,7 @@ async function init() {
   $('refreshBtn').addEventListener('click', async () => {
     await fetchQuotes();
     renderRankings();
+    renderMovers();
     secondsLeft = nyseStatus() === 'open' ? 60 : 300;
   });
 
@@ -903,6 +942,7 @@ async function init() {
   // Load data
   await fetchQuotes();
   renderRankings();
+  renderMovers();
   scheduleRefresh();
 
   // ETFs tab — renders from already-loaded quotes (no extra fetch needed)
@@ -942,6 +982,7 @@ async function init() {
       $('stocksBody').innerHTML = '<tr><td colspan="12" class="loading-cell">Fetching stock data…</td></tr>';
       await fetchStockQuotes();
       renderStocksTable();
+      renderMovers(); // update movers now stocks are included
     }
   });
 
