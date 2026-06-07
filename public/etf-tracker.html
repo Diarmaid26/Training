@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYSE ETF Tracker</title>
+  <link rel="stylesheet" href="etf-tracker.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-left">
+      <a class="back-link" href="/">← DOC</a>
+      <h1>NYSE ETF Tracker</h1>
+      <span class="subtitle">Top 100 ETFs · Live data via Yahoo Finance</span>
+    </div>
+    <div class="header-right">
+      <div class="market-status" id="marketStatus">
+        <span class="market-dot" id="marketDot"></span>
+        <span id="marketLabel">Checking…</span>
+      </div>
+      <div class="refresh-info">
+        <span id="lastRefresh">—</span>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh now">↻</button>
+        <span class="countdown" id="countdown"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── TOP MOVERS BAR ── -->
+  <div class="movers-bar" id="moversBar">
+    <div class="movers-section">
+      <span class="movers-label gainers-label">▲ Top Gainers</span>
+      <div class="movers-list" id="moverGainers"></div>
+    </div>
+    <div class="movers-divider"></div>
+    <div class="movers-section">
+      <span class="movers-label losers-label">▼ Top Losers</span>
+      <div class="movers-list" id="moverLosers"></div>
+    </div>
+  </div>
+
+  <nav class="tab-bar">
+    <button class="tab active" data-tab="rankings">Rankings</button>
+    <button class="tab" data-tab="snapshot">Snapshot</button>
+    <button class="tab" data-tab="compare">Compare</button>
+    <button class="tab" data-tab="chart">Chart</button>
+    <button class="tab" data-tab="etfs">Top 100 ETFs</button>
+    <button class="tab" data-tab="stocks">Top 100 Stocks</button>
+  </nav>
+
+  <!-- ── RANKINGS TAB ── -->
+  <section class="tab-content active" id="tab-rankings">
+    <div class="toolbar">
+      <div class="category-filters" id="categoryFilters">
+        <button class="chip active" data-cat="All">All</button>
+        <button class="chip" data-cat="Broad US Equity">Broad US Equity</button>
+        <button class="chip" data-cat="US Sector">US Sector</button>
+        <button class="chip" data-cat="International">International</button>
+        <button class="chip" data-cat="Factor / Smart Beta">Factor / Smart Beta</button>
+        <button class="chip" data-cat="Fixed Income">Fixed Income</button>
+        <button class="chip" data-cat="Commodities &amp; Alts">Commodities &amp; Alts</button>
+        <button class="chip" data-cat="Leveraged / Inverse">Leveraged / Inverse</button>
+      </div>
+      <input class="search-box" id="searchBox" type="text" placeholder="Search ticker or name…" />
+    </div>
+
+    <div class="table-wrap">
+      <table class="etf-table" id="rankingsTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-col="rank">#</th>
+            <th class="sortable" data-col="symbol">Ticker</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th class="sortable num" data-col="price">Price</th>
+            <th class="sortable num" data-col="change">Chg</th>
+            <th class="sortable num" data-col="changePct">Chg%</th>
+            <th class="sortable num" data-col="bid">Bid</th>
+            <th class="sortable num" data-col="ask">Ask</th>
+            <th class="sortable num" data-col="spread">Spread</th>
+            <th class="sortable num" data-col="volume">Volume</th>
+            <th class="sortable num" data-col="aum">AUM</th>
+            <th class="num">Exp Ratio</th>
+          </tr>
+        </thead>
+        <tbody id="rankingsBody">
+          <tr><td colspan="13" class="loading-cell">Loading ETF data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── SNAPSHOT TAB ── -->
+  <section class="tab-content" id="tab-snapshot">
+    <div class="snapshot-search">
+      <input class="search-box large" id="snapshotSearch" type="text" placeholder="Type a ticker (e.g. SPY, QQQ, TLT)…" autocomplete="off" />
+      <div class="autocomplete-list" id="autocompleteList"></div>
+    </div>
+    <div id="snapshotCard" class="snapshot-card hidden">
+      <div class="snapshot-header">
+        <div>
+          <span class="snap-symbol" id="snapSymbol"></span>
+          <span class="snap-name" id="snapName"></span>
+          <span class="snap-cat" id="snapCat"></span>
+        </div>
+        <div class="snap-price-block">
+          <span class="snap-price" id="snapPrice"></span>
+          <span class="snap-change" id="snapChange"></span>
+        </div>
+      </div>
+      <div class="snap-grid">
+        <div class="snap-metric"><label>Bid</label><span id="sdBid"></span></div>
+        <div class="snap-metric"><label>Ask</label><span id="sdAsk"></span></div>
+        <div class="snap-metric"><label>Spread ($)</label><span id="sdSpread"></span></div>
+        <div class="snap-metric"><label>Spread (%)</label><span id="sdSpreadPct"></span></div>
+        <div class="snap-metric"><label>Day Range</label><span id="sdDayRange"></span></div>
+        <div class="snap-metric"><label>52W Range</label><span id="sd52w"></span></div>
+        <div class="snap-metric"><label>Open</label><span id="sdOpen"></span></div>
+        <div class="snap-metric"><label>Prev Close</label><span id="sdPrevClose"></span></div>
+        <div class="snap-metric"><label>Volume</label><span id="sdVolume"></span></div>
+        <div class="snap-metric"><label>AUM</label><span id="sdAUM"></span></div>
+        <div class="snap-metric"><label>Expense Ratio</label><span id="sdER"></span></div>
+        <div class="snap-metric"><label>Dividend Yield</label><span id="sdYield"></span></div>
+        <div class="snap-metric"><label>50-Day Avg</label><span id="sd50d"></span></div>
+        <div class="snap-metric"><label>200-Day Avg</label><span id="sd200d"></span></div>
+        <div class="snap-metric"><label>YTD Return</label><span id="sdYTD"></span></div>
+        <div class="snap-metric"><label>3M Return</label><span id="sd3M"></span></div>
+      </div>
+      <div class="snap-chart-wrap">
+        <canvas id="snapshotChart"></canvas>
+      </div>
+      <div class="holdings-section" id="snapHoldingsSection" style="display:none">
+        <h4>Top Holdings &amp; Strategy</h4>
+        <div class="holdings-tags" id="snapHoldings"></div>
+      </div>
+      <p class="stock-description" id="snapDescription" style="margin-top:16px;display:none"></p>
+    </div>
+    <div id="snapshotEmpty" class="empty-state">Select a ticker above to view details.</div>
+  </section>
+
+  <!-- ── ETF SLIDE-IN DETAIL PANEL (Rankings tab click) ── -->
+  <div class="stock-detail-panel hidden" id="etfDetailPanel">
+    <button class="panel-close" id="etfPanelClose">✕</button>
+    <div class="stock-detail-inner">
+      <div class="stock-detail-header">
+        <div>
+          <span class="snap-symbol" id="edSymbol"></span>
+          <span class="snap-name" id="edName"></span>
+          <span class="snap-cat" id="edCat"></span>
+        </div>
+        <div class="snap-price-block">
+          <span class="snap-price" id="edPrice"></span>
+          <span class="snap-change" id="edChange"></span>
+        </div>
+      </div>
+      <p class="stock-description" id="edDescription"></p>
+      <div class="snap-grid">
+        <div class="snap-metric"><label>Bid</label><span id="edBid"></span></div>
+        <div class="snap-metric"><label>Ask</label><span id="edAsk"></span></div>
+        <div class="snap-metric"><label>Spread</label><span id="edSpread"></span></div>
+        <div class="snap-metric"><label>Volume</label><span id="edVolume"></span></div>
+        <div class="snap-metric"><label>AUM</label><span id="edAUM"></span></div>
+        <div class="snap-metric"><label>Expense Ratio</label><span id="edER"></span></div>
+        <div class="snap-metric"><label>Div Yield</label><span id="edYield"></span></div>
+        <div class="snap-metric"><label>Day Range</label><span id="edDayRange"></span></div>
+        <div class="snap-metric"><label>52W Range</label><span id="ed52w"></span></div>
+        <div class="snap-metric"><label>50-Day Avg</label><span id="ed50d"></span></div>
+        <div class="snap-metric"><label>200-Day Avg</label><span id="ed200d"></span></div>
+        <div class="snap-metric"><label>YTD Return</label><span id="edYTD"></span></div>
+      </div>
+      <div class="holdings-section">
+        <h4>Top Holdings &amp; Strategy</h4>
+        <div class="holdings-tags" id="edHoldings"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── COMPARE TAB ── -->
+  <section class="tab-content" id="tab-compare">
+    <div class="compare-pickers">
+      <div class="picker-group">
+        <label>ETF A</label>
+        <input class="search-box" id="compareInputA" type="text" placeholder="e.g. SPY" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteA"></div>
+      </div>
+      <div class="vs-badge">vs</div>
+      <div class="picker-group">
+        <label>ETF B</label>
+        <input class="search-box" id="compareInputB" type="text" placeholder="e.g. QQQ" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteB"></div>
+      </div>
+    </div>
+    <div id="compareResult" class="compare-table-wrap hidden"></div>
+    <div id="compareEmpty" class="empty-state">Pick two ETFs above to compare them side by side.</div>
+  </section>
+
+  <!-- ── CHART TAB ── -->
+  <section class="tab-content" id="tab-chart">
+    <div class="chart-toolbar">
+      <div class="chart-picker-wrap">
+        <input class="search-box" id="chartInput" type="text" placeholder="Add ticker (up to 6)…" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteChart"></div>
+      </div>
+      <div class="chart-tags" id="chartTags"></div>
+      <div class="chart-controls">
+        <div class="range-btns">
+          <button class="range-btn" data-range="ytd">YTD</button>
+          <button class="range-btn" data-range="1y">1Y</button>
+          <button class="range-btn" data-range="3y">3Y</button>
+          <button class="range-btn active" data-range="5y">5Y</button>
+          <button class="range-btn" data-range="max">All</button>
+        </div>
+        <label class="normalize-toggle">
+          <input type="checkbox" id="normalizeToggle" checked />
+          Normalize to 100
+        </label>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="mainChart"></canvas>
+      <div class="chart-legend" id="chartLegend"></div>
+    </div>
+    <p class="chart-note">Monthly closes since Jan 2020 via Yahoo Finance · 15-20 min delay during market hours</p>
+  </section>
+
+  <!-- ── TOP 100 ETFs TAB ── -->
+  <section class="tab-content" id="tab-etfs">
+    <div class="toolbar">
+      <div class="category-filters" id="etfCategoryFilters">
+        <button class="chip active" data-ecat="All">All</button>
+        <button class="chip" data-ecat="Broad US Equity">Broad US Equity</button>
+        <button class="chip" data-ecat="US Sector">US Sector</button>
+        <button class="chip" data-ecat="International">International</button>
+        <button class="chip" data-ecat="Factor / Smart Beta">Factor / Smart Beta</button>
+        <button class="chip" data-ecat="Fixed Income">Fixed Income</button>
+        <button class="chip" data-ecat="Commodities &amp; Alts">Commodities &amp; Alts</button>
+        <button class="chip" data-ecat="Leveraged / Inverse">Leveraged / Inverse</button>
+      </div>
+      <input class="search-box" id="etfTabSearchBox" type="text" placeholder="Search ticker or fund name…" />
+    </div>
+
+    <div class="table-wrap">
+      <table class="etf-table" id="etfsTabTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-ecol="rank">#</th>
+            <th class="sortable" data-ecol="symbol">Ticker</th>
+            <th>Fund Name</th>
+            <th>Category</th>
+            <th class="sortable num" data-ecol="price">Price</th>
+            <th class="sortable num" data-ecol="changePct">Chg%</th>
+            <th class="sortable num" data-ecol="bid">Bid</th>
+            <th class="sortable num" data-ecol="ask">Ask</th>
+            <th class="sortable num" data-ecol="spread">Spread</th>
+            <th class="sortable num" data-ecol="volume">Volume</th>
+            <th class="sortable num" data-ecol="aum">AUM</th>
+            <th class="num">Exp Ratio</th>
+          </tr>
+        </thead>
+        <tbody id="etfsTabBody">
+          <tr><td colspan="12" class="loading-cell">Loading ETF data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── STOCKS TAB ── -->
+  <section class="tab-content" id="tab-stocks">
+    <div class="toolbar">
+      <div class="category-filters" id="stockSectorFilters">
+        <button class="chip active" data-sector="All">All</button>
+        <button class="chip" data-sector="Technology">Technology</button>
+        <button class="chip" data-sector="Health Care">Health Care</button>
+        <button class="chip" data-sector="Financials">Financials</button>
+        <button class="chip" data-sector="Consumer Discretionary">Consumer Disc.</button>
+        <button class="chip" data-sector="Consumer Staples">Consumer Staples</button>
+        <button class="chip" data-sector="Communication Services">Communication</button>
+        <button class="chip" data-sector="Industrials">Industrials</button>
+        <button class="chip" data-sector="Energy">Energy</button>
+        <button class="chip" data-sector="Materials">Materials</button>
+        <button class="chip" data-sector="Utilities">Utilities</button>
+        <button class="chip" data-sector="Real Estate">Real Estate</button>
+      </div>
+      <input class="search-box" id="stockSearchBox" type="text" placeholder="Search ticker or company…" />
+    </div>
+
+    <div class="table-wrap">
+      <table class="etf-table" id="stocksTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-scol="rank">#</th>
+            <th class="sortable" data-scol="symbol">Ticker</th>
+            <th>Company</th>
+            <th>Sector</th>
+            <th class="sortable num" data-scol="price">Price</th>
+            <th class="sortable num" data-scol="changePct">Chg%</th>
+            <th class="sortable num" data-scol="bid">Bid</th>
+            <th class="sortable num" data-scol="ask">Ask</th>
+            <th class="sortable num" data-scol="volume">Volume</th>
+            <th class="sortable num" data-scol="aum">Mkt Cap</th>
+            <th class="sortable num" data-scol="pe">P/E</th>
+            <th class="num">Div Yield</th>
+          </tr>
+        </thead>
+        <tbody id="stocksBody">
+          <tr><td colspan="12" class="loading-cell">Loading stock data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Expanded stock detail panel -->
+    <div class="stock-detail-panel hidden" id="stockDetailPanel">
+      <button class="panel-close" id="stockPanelClose">✕</button>
+      <div class="stock-detail-inner">
+        <div class="stock-detail-header">
+          <div>
+            <span class="snap-symbol" id="sdSymbol"></span>
+            <span class="snap-name" id="sdCompany"></span>
+            <span class="snap-cat" id="sdSector"></span>
+          </div>
+          <div class="snap-price-block">
+            <span class="snap-price" id="sdPrice"></span>
+            <span class="snap-change" id="sdPriceChange"></span>
+          </div>
+        </div>
+        <p class="stock-description" id="sdDescription"></p>
+        <div class="snap-grid">
+          <div class="snap-metric"><label>Bid</label><span id="sdStockBid"></span></div>
+          <div class="snap-metric"><label>Ask</label><span id="sdStockAsk"></span></div>
+          <div class="snap-metric"><label>Spread</label><span id="sdStockSpread"></span></div>
+          <div class="snap-metric"><label>Volume</label><span id="sdStockVol"></span></div>
+          <div class="snap-metric"><label>Market Cap</label><span id="sdMktCap"></span></div>
+          <div class="snap-metric"><label>P/E Ratio</label><span id="sdPE"></span></div>
+          <div class="snap-metric"><label>Div Yield</label><span id="sdDivYield"></span></div>
+          <div class="snap-metric"><label>EPS (TTM)</label><span id="sdEPS"></span></div>
+          <div class="snap-metric"><label>Day Range</label><span id="sdStockDayRange"></span></div>
+          <div class="snap-metric"><label>52W Range</label><span id="sdStock52w"></span></div>
+          <div class="snap-metric"><label>50-Day Avg</label><span id="sdStock50d"></span></div>
+          <div class="snap-metric"><label>200-Day Avg</label><span id="sdStock200d"></span></div>
+        </div>
+        <div class="holdings-section">
+          <h4>Key Products &amp; Business Lines</h4>
+          <div class="holdings-tags" id="sdHoldings"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>Data: Yahoo Finance · 15-20 min delay during market hours · Leveraged/inverse ETFs carry additional risk</p>
+  </footer>
+
+  <script src="etf-tracker.js"></script>
+</body>
+</html>
