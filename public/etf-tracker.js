@@ -340,27 +340,11 @@ async function fetchHistory(symbol) {
 
 // ── Auto-refresh ──────────────────────────────────────────────────────────────
 function scheduleRefresh() {
+  // Auto-refresh disabled — data updates only on manual ↻ button press
   clearInterval(refreshTimer);
   clearInterval(countdownTimer);
-  const status = nyseStatus();
-  const interval = status === 'open' ? 60 : 300;  // 60s open, 5min closed
-  secondsLeft = interval;
-
-  refreshTimer = setInterval(async () => {
-    await fetchQuotes();
-    renderRankings();
-    renderMovers();
-    secondsLeft = interval;
-  }, interval * 1000);
-
-  countdownTimer = setInterval(() => {
-    secondsLeft = Math.max(0, secondsLeft - 1);
-    const s = nyseStatus();
-    $('countdown').textContent = s === 'open'
-      ? `↻ in ${secondsLeft}s`
-      : `(closed · ${Math.round(secondsLeft / 60)}m)`;
-    updateMarketStatus();
-  }, 1000);
+  $('countdown').textContent = '';
+  updateMarketStatus();
 }
 
 // ── Top Movers ────────────────────────────────────────────────────────────────
