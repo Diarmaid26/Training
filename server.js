@@ -99,6 +99,48 @@ app.get('/api/etf/history', async (req, res) => {
   }
 });
 
+// Quotes from the ASX website's own feed, reshaped to Yahoo's quote format.
+// For the few ASX products whose Yahoo feed is dead. Unofficial endpoint; no price history.
+async function asxQuote(symbol) {
+  const base = `https://asx.api.cmfyapp.com/asx-research/1.0/etfs/${symbol}`;
+  const get = async path => {
+    const resp = await fetch(`${base}/${path}`, { signal: AbortSignal.timeout(10000), headers: { Accept: 'application/json' } });
+    if (!resp.ok) throw new Error(`ASX returned ${resp.status}`);
+    return (await resp.json()).data || {};
+  };
+  const [h, k] = await Promise.all([get('header'), get('key-statistics')]);
+  const num = v => (typeof v === 'number' && v !== -32768 ? v : undefined);  // -32768 is the feed's "no value"
+  const s = k.shareInformation || {};
+  return {
+    symbol,
+    shortName: h.displayName,
+    regularMarketPrice: num(h.priceLast),
+    regularMarketChange: num(h.priceChange),
+    regularMarketChangePercent: num(h.priceChangePercent),
+    regularMarketVolume: num(h.volume),
+    bid: num(h.priceBid),
+    ask: num(h.priceAsk),
+    netAssets: num(h.netAssets),
+    regularMarketDayHigh: num(s.priceDayHigh),
+    regularMarketDayLow: num(s.priceDayLow),
+    fiftyTwoWeekHigh: num(s.priceFiftyTwoWeekHigh),
+    fiftyTwoWeekLow: num(s.priceFiftyTwoWeekLow),
+    regularMarketPreviousClose: num(s.priceClose),
+    ytdReturn: num(k.fundamentals?.returnYearToDate),
+  };
+}
+
+app.get('/api/asx/quote', async (req, res) => {
+  const symbols = String(req.query.symbols || '').split(',').filter(Boolean);
+  if (!symbols.length || symbols.length > 10 || !symbols.every(s => /^[A-Z0-9]{2,6}$/.test(s))) {
+    return res.status(400).json({ error: 'symbols must be 1-10 ASX codes' });
+  }
+  const settled = await Promise.allSettled(symbols.map(asxQuote));
+  const result = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
+  if (!result.length) return res.status(502).json({ error: settled[0].reason.message });
+  res.json({ quoteResponse: { result } });
+});
+
 app.post('/contact', (req, res) => {
   const { name, email, message } = req.body;
 
