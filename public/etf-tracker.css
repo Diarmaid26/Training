@@ -415,7 +415,8 @@ body {
   min-height: 400px;
 }
 
-.chart-wrap canvas { width: 100% !important; }
+/* max-height stops Chart.js growing the canvas every time the legend below it adds height */
+.chart-wrap canvas { width: 100% !important; max-height: 60vh; }
 
 .chart-legend {
   display: flex;

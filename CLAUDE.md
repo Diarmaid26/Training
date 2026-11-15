@@ -9,8 +9,10 @@ Served at `http://localhost:3000` via Node.js/Express.
 |---|---|
 | `server.js` | Express server + Yahoo Finance proxy |
 | `public/etf-tracker.html` | Main tracker UI |
-| `public/etf-tracker.css` | Dark-theme styles |
+| `public/etf-tracker.css` | Dark-theme styles (shared by both trackers) |
 | `public/etf-tracker.js` | All client logic, ETF_UNIVERSE, STOCK_UNIVERSE |
+| `public/asx-tracker.html` | ASX tracker UI (same layout as the NYSE tracker) |
+| `public/asx-tracker.js` | ASX client logic and universes; symbols stored without `.AX`, added at fetch time |
 | `public/index.html` | DOC portfolio homepage |
 
 ## Data & API
