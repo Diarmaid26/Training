@@ -397,7 +397,7 @@ function sortValue(sym, col) {
     case 'ask':       return q.ask || 0;
     case 'spread':    return (q.ask && q.bid) ? q.ask - q.bid : 0;
     case 'volume':    return q.regularMarketVolume || 0;
-    case 'aum':       return q.marketCap || 0;
+    case 'aum':       return (q.netAssets ?? q.marketCap) || 0;
     default:          return 0;
   }
 }
@@ -416,7 +416,7 @@ function renderRankings() {
     const va = sortValue(a.symbol, sortCol);
     const vb = sortValue(b.symbol, sortCol);
     if (typeof va === 'string') return sortDir * va.localeCompare(vb);
-    return sortDir * (vb - va);
+    return -sortDir * (vb - va);
   });
 
   if (!Object.keys(quotes).length) {
@@ -444,7 +444,7 @@ function renderRankings() {
       <td class="num">${ask ? '$' + fmt(ask) : '—'}</td>
       <td class="num">${spread ? '$' + fmt(spread) : '—'}</td>
       <td class="num">${fmtVol(q.regularMarketVolume)}</td>
-      <td class="num">${fmtAUM(q.marketCap)}</td>
+      <td class="num">${fmtAUM((q.netAssets ?? q.marketCap))}</td>
       <td class="num">${fmt(e.er, 2)}%</td>
     </tr>`;
   }).join('') || '<tr><td colspan="13" class="loading-cell">No ETFs match your filter.</td></tr>';
@@ -483,7 +483,7 @@ window.openETFDetail = function(symbol) {
   $('edAsk').textContent        = ask  ? '$' + fmt(ask)  : '—';
   $('edSpread').textContent     = spread ? '$' + fmt(spread) : '—';
   $('edVolume').textContent     = fmtVol(q.regularMarketVolume);
-  $('edAUM').textContent        = fmtAUM(q.marketCap);
+  $('edAUM').textContent        = fmtAUM((q.netAssets ?? q.marketCap));
   $('edER').textContent         = e.er != null ? fmt(e.er, 2) + '%' : '—';
   $('edYield').textContent      = q.trailingAnnualDividendYield != null
     ? fmt(q.trailingAnnualDividendYield * 100) + '%' : '—';
@@ -495,7 +495,7 @@ window.openETFDetail = function(symbol) {
   $('ed200d').textContent       = q.twoHundredDayAverage != null ? '$' + fmt(q.twoHundredDayAverage) : '—';
   const ytd = q.ytdReturn;
   $('edYTD').className          = cls(ytd);
-  $('edYTD').textContent        = ytd != null ? fmtPct(ytd * 100) : '—';
+  $('edYTD').textContent        = ytd != null ? fmtPct(ytd) : '—';
   $('edHoldings').innerHTML     = (e.holdings || []).map(h =>
     `<span class="holding-tag">${h}</span>`).join('');
 
@@ -548,16 +548,16 @@ async function renderSnapshot(symbol) {
   $('sdOpen').textContent     = q.regularMarketOpen != null ? '$' + fmt(q.regularMarketOpen) : '—';
   $('sdPrevClose').textContent = q.regularMarketPreviousClose != null ? '$' + fmt(q.regularMarketPreviousClose) : '—';
   $('sdVolume').textContent   = fmtVol(q.regularMarketVolume);
-  $('sdAUM').textContent      = fmtAUM(q.marketCap);
+  $('sdAUM').textContent      = fmtAUM((q.netAssets ?? q.marketCap));
   $('sdER').textContent       = m?.er != null ? fmt(m.er, 2) + '%' : (m?.sector ? '—' : 'n/a');
   $('sdYield').textContent    = q.trailingAnnualDividendYield != null
     ? fmt(q.trailingAnnualDividendYield * 100) + '%' : '—';
   $('sd50d').textContent      = q.fiftyDayAverage != null ? '$' + fmt(q.fiftyDayAverage) : '—';
   $('sd200d').textContent     = q.twoHundredDayAverage != null ? '$' + fmt(q.twoHundredDayAverage) : '—';
   $('sdYTD').className        = cls(q.ytdReturn);
-  $('sdYTD').textContent      = q.ytdReturn != null ? fmtPct(q.ytdReturn * 100) : '—';
+  $('sdYTD').textContent      = q.ytdReturn != null ? fmtPct(q.ytdReturn) : '—';
   $('sd3M').className         = cls(q.trailingThreeMonthReturns);
-  $('sd3M').textContent       = q.trailingThreeMonthReturns != null ? fmtPct(q.trailingThreeMonthReturns * 100) : '—';
+  $('sd3M').textContent       = q.trailingThreeMonthReturns != null ? fmtPct(q.trailingThreeMonthReturns) : '—';
 
   // Description + holdings (if in universe)
   const meta = META[symbol];
@@ -642,15 +642,15 @@ async function renderCompare(symA, symB) {
     { label: 'Ask',            a: askA,                       b: askB,                       fmt: v => '$' + fmt(v),     higher: null },
     { label: 'Spread ($)',     a: spreadA,                    b: spreadB,                    fmt: v => '$' + fmt(v),     higher: false },
     { label: 'Volume',         a: qA.regularMarketVolume,     b: qB.regularMarketVolume,     fmt: fmtVol,                higher: true },
-    { label: 'AUM',            a: qA.marketCap,               b: qB.marketCap,               fmt: fmtAUM,                higher: true },
+    { label: 'AUM',            a: (qA.netAssets ?? qA.marketCap),               b: (qB.netAssets ?? qB.marketCap),               fmt: fmtAUM,                higher: true },
     { label: 'Expense Ratio',  a: mA.er,                      b: mB.er,                      fmt: v => fmt(v, 2) + '%',  higher: false },
     { label: 'Div Yield',      a: qA.trailingAnnualDividendYield != null ? qA.trailingAnnualDividendYield * 100 : null,
                                 b: qB.trailingAnnualDividendYield != null ? qB.trailingAnnualDividendYield * 100 : null,
                                 fmt: v => fmt(v) + '%', higher: true },
     { label: '50-Day Avg',     a: qA.fiftyDayAverage,         b: qB.fiftyDayAverage,         fmt: v => '$' + fmt(v),     higher: null },
     { label: '200-Day Avg',    a: qA.twoHundredDayAverage,    b: qB.twoHundredDayAverage,    fmt: v => '$' + fmt(v),     higher: null },
-    { label: 'YTD Return',     a: qA.ytdReturn != null ? qA.ytdReturn * 100 : null,
-                                b: qB.ytdReturn != null ? qB.ytdReturn * 100 : null,
+    { label: 'YTD Return',     a: qA.ytdReturn != null ? qA.ytdReturn : null,
+                                b: qB.ytdReturn != null ? qB.ytdReturn : null,
                                 fmt: fmtPct, higher: true },
   ];
 
@@ -1030,7 +1030,7 @@ function etfTabSortValue(sym, col) {
     case 'ask':       return q.ask > 0 ? q.ask : 0;
     case 'spread':    return (q.bid > 0 && q.ask > 0) ? q.ask - q.bid : 0;
     case 'volume':    return q.regularMarketVolume || 0;
-    case 'aum':       return q.marketCap || 0;
+    case 'aum':       return (q.netAssets ?? q.marketCap) || 0;
     default:          return 0;
   }
 }
@@ -1050,7 +1050,7 @@ function renderETFsTab() {
     const va = etfTabSortValue(a.symbol, etfTabSortCol);
     const vb = etfTabSortValue(b.symbol, etfTabSortCol);
     if (typeof va === 'string') return etfTabSortDir * va.localeCompare(vb);
-    return etfTabSortDir * (vb - va);
+    return -etfTabSortDir * (vb - va);
   });
 
   if (!Object.keys(quotes).length) {
@@ -1076,7 +1076,7 @@ function renderETFsTab() {
       <td class="num">${ask ? '$' + fmt(ask) : '—'}</td>
       <td class="num">${spread ? '$' + fmt(spread) : '—'}</td>
       <td class="num">${fmtVol(q.regularMarketVolume)}</td>
-      <td class="num">${fmtAUM(q.marketCap)}</td>
+      <td class="num">${fmtAUM((q.netAssets ?? q.marketCap))}</td>
       <td class="num">${fmt(e.er, 2)}%</td>
     </tr>`;
   }).join('') || '<tr><td colspan="12" class="loading-cell">No ETFs match your filter.</td></tr>';
@@ -1120,7 +1120,7 @@ function stockSortValue(sym, col) {
     case 'bid':       return q.bid || 0;
     case 'ask':       return q.ask || 0;
     case 'volume':    return q.regularMarketVolume || 0;
-    case 'aum':       return q.marketCap || 0;
+    case 'aum':       return (q.netAssets ?? q.marketCap) || 0;
     case 'pe':        return q.trailingPE || 0;
     default:          return 0;
   }
@@ -1141,7 +1141,7 @@ function renderStocksTable() {
     const va = stockSortValue(a.symbol, stockSortCol);
     const vb = stockSortValue(b.symbol, stockSortCol);
     if (typeof va === 'string') return stockSortDir * va.localeCompare(vb);
-    return stockSortDir * (vb - va);
+    return -stockSortDir * (vb - va);
   });
 
   if (!Object.keys(stockQuotes).length) {
@@ -1167,7 +1167,7 @@ function renderStocksTable() {
       <td class="num">${bid ? '$' + fmt(bid) : '—'}</td>
       <td class="num">${ask ? '$' + fmt(ask) : '—'}</td>
       <td class="num">${fmtVol(q.regularMarketVolume)}</td>
-      <td class="num">${fmtAUM(q.marketCap)}</td>
+      <td class="num">${fmtAUM((q.netAssets ?? q.marketCap))}</td>
       <td class="num">${pe ? fmt(pe, 1) + 'x' : '—'}</td>
       <td class="num">${divY != null ? fmt(divY * 100) + '%' : '—'}</td>
     </tr>`;
@@ -1207,7 +1207,7 @@ window.openStockDetail = function(symbol) {
   $('sdStockAsk').textContent    = ask  ? '$' + fmt(ask)  : '—';
   $('sdStockSpread').textContent = spread ? '$' + fmt(spread) : '—';
   $('sdStockVol').textContent    = fmtVol(q.regularMarketVolume);
-  $('sdMktCap').textContent      = fmtAUM(q.marketCap);
+  $('sdMktCap').textContent      = fmtAUM((q.netAssets ?? q.marketCap));
   $('sdPE').textContent          = q.trailingPE ? fmt(q.trailingPE, 1) + 'x' : '—';
   $('sdDivYield').textContent    = q.trailingAnnualDividendYield != null
     ? fmt(q.trailingAnnualDividendYield * 100) + '%' : '—';
