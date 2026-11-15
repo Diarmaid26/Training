@@ -19,6 +19,7 @@ Served at `http://localhost:3000` via Node.js/Express.
 - Yahoo Finance requires crumb + cookie auth — handled server-side in `getYahooSession()`
 - `/api/etf/quote` — batch quote endpoint (up to 30 symbols)
 - `/api/etf/history` — historical prices from Jan 2020 to today (explicit period1/period2 timestamps)
+- `/api/asx/quote` — quotes from the ASX website feed in Yahoo format, for ASX ETFs flagged `source: 'asx'` whose Yahoo feed is dead (no history)
 - Session cached for 30 minutes; invalidated on 401/403
 
 ## UI Rules

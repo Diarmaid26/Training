@@ -226,8 +226,11 @@ const ETF_UNIVERSE = [
   // Commodities & Crypto
   { symbol:'GOLD',   name:'Global X Physical Gold', cat:'Commodities & Crypto', er:0.40, description:"The oldest gold product on the ASX. Each unit is backed by physical gold bars held in a London vault, unhedged.", holdings:['Physical gold bullion','Vaulted in London','Unhedged (AUD gold price)','Allocated bars'] },
   { symbol:'NUGG',   name:'VanEck Gold Bullion ETF', cat:'Commodities & Crypto', er:0.25, description:"Backed by gold sourced exclusively from Australian mines and stored in Australia.", holdings:['Australian-sourced gold','Stored in Australia','Physical redemption available','Unhedged'] },
+  // source:'asx' — Yahoo's feed for these is dead, so quotes come from the ASX website's feed (no history)
+  { symbol:'PMGOLD', name:'Perth Mint Gold', cat:'Commodities & Crypto', er:0.15, source:'asx', description:"Gold held by The Perth Mint and guaranteed by the Government of Western Australia. One of the lowest-cost ways to hold gold on the ASX.", holdings:['Physical gold','Held by The Perth Mint','WA government guarantee','1/100 oz per unit'] },
   { symbol:'GLDN',   name:'iShares Physical Gold ETF', cat:'Commodities & Crypto', er:0.18, description:"BlackRock's low-cost physically backed gold fund.", holdings:['Physical gold bullion','Vaulted in London','Unhedged','Allocated bars'] },
   { symbol:'QAU',    name:'Betashares Gold Bullion ETF — Currency Hedged', cat:'Commodities & Crypto', er:0.59, description:"Physical gold with the US dollar exposure hedged, so returns track the US dollar gold price rather than the Australian dollar price.", holdings:['Physical gold bullion','Vaulted in London','AUD hedged','Tracks USD gold price'] },
+  { symbol:'ETPMAG', name:'Global X Physical Silver', cat:'Commodities & Crypto', er:0.49, source:'asx', description:"Backed by physical silver held in a London vault.", holdings:['Physical silver bullion','Vaulted in London','Unhedged','Industrial & investment demand'] },
   { symbol:'VBTC',   name:'VanEck Bitcoin ETF', cat:'Commodities & Crypto', er:0.45, description:"The first bitcoin ETF to list on the ASX itself. Gains its exposure through VanEck's US-listed spot bitcoin trust.", holdings:['Bitcoin (via VanEck Bitcoin Trust)','Spot exposure','Unhedged','Very high volatility'] },
 
   // Geared / Inverse
@@ -321,12 +324,14 @@ async function fetchQuotes() {
   btn.classList.add('spinning');
   try {
     // Batch into groups of 30 to keep URLs manageable
+    const viaYahoo = SYMBOLS.filter(s => META[s].source !== 'asx');
+    const viaAsx   = SYMBOLS.filter(s => META[s].source === 'asx');
     const batches = [];
-    for (let i = 0; i < SYMBOLS.length; i += 30) batches.push(SYMBOLS.slice(i, i + 30));
-    const results = await Promise.all(batches.map(batch =>
-      fetch(`/api/etf/quote?symbols=${batch.map(yh).join(',')}`)
-        .then(r => r.json())
-        .catch(() => null)
+    for (let i = 0; i < viaYahoo.length; i += 30) batches.push(viaYahoo.slice(i, i + 30));
+    const urls = batches.map(batch => `/api/etf/quote?symbols=${batch.map(yh).join(',')}`);
+    if (viaAsx.length) urls.push(`/api/asx/quote?symbols=${viaAsx.join(',')}`);
+    const results = await Promise.all(urls.map(url =>
+      fetch(url).then(r => r.json()).catch(() => null)
     ));
     results.forEach(res => {
       if (!res) return;
@@ -343,6 +348,7 @@ async function fetchQuotes() {
 
 async function fetchHistory(symbol) {
   if (historyCache[symbol]) return historyCache[symbol];
+  if (META[symbol]?.source === 'asx') return null;  // the ASX feed has no price history
   const res = await fetch(`/api/etf/history?symbol=${yh(symbol)}&interval=1mo`);
   const data = await res.json();
   const chart = data?.chart?.result?.[0];
@@ -600,6 +606,9 @@ async function renderSnapshot(symbol) {
   const hist = await fetchHistory(symbol);
   if (hist && hist.length) {
     drawMiniChart(hist);
+  } else if (snapshotChart) {
+    snapshotChart.destroy();
+    snapshotChart = null;
   }
 }
 
